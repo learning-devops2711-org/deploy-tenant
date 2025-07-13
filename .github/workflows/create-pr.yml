@@ -1,58 +1,59 @@
-name: Create and optionally merge PR
+name: Create and Auto Merge PR
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        default: 'feature/deploy'
-        description: 'Target branch name (e.g., feature/xyz)'
+      auto_merge:
+        description: 'Auto-merge the pull request'
         required: true
-      title:
-        description: 'Pull Request title'
-        required: true
-      body:
-        description: 'Pull Request body'
-        required: false
-        default: ''
-      automerge:
-        description: 'Automerge the PR after creation (true/false)'
-        required: false
         default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
   create-pr:
     runs-on: ubuntu-latest
     environment: dev  # Only needed if you're using an environment
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v4
+        with:
+          ref: main
 
-      - name: Create pull request
-        id: create_pr
+      - name: Create temp branch
+        run: |
+          export BRANCH=temp/random-file-${{ github.run_id }}
+          git checkout -b $BRANCH
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_ENV
+
+      - name: Create random file and commit
+        run: |
+          FILENAME=random-$(date +%s).txt
+          echo "Generated at $(date)" > $FILENAME
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $FILENAME
+          git commit -m "chore: add random file $FILENAME"
+
+      - name: Push temp branch
+        run: |
+          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} $BRANCH_NAME
+
+      - name: Create Pull Request
+        id: cpr
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          commit-message: ${{ github.event.inputs.title }}
-          title: ${{ github.event.inputs.title }}
-          body: ${{ github.event.inputs.body }}
+          title: "chore: Add random file"
+          body: "Automatically generated random file"
+          branch: ${{ env.BRANCH_NAME }}
           base: main
-          branch: ${{ github.event.inputs.branch }}
-          delete-branch: false
 
-      - name: Enable auto-merge
-        if: ${{ github.event.inputs.automerge == 'true' }}
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prNumber = ${{ steps.create_pr.outputs.pull-request-number }};
-            if (!prNumber) {
-              core.setFailed("No PR number returned from create-pull-request.");
-              return;
-            }
-            await github.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber,
-              merge_method: "squash"  // or "merge", "rebase"
-            });
+      - name: Auto-merge PR if enabled
+        if: inputs.auto_merge == 'true'
+        run: |
+          gh pr merge "${{ steps.cpr.outputs.pull-request-url }}" --merge --admin
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
