@@ -32,8 +32,9 @@ jobs:
 
       - name: Create a tenant file for ${{env.TENANT_NAME}}
         run: |
-              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" stacks/example.api.yaml > stacks/${{env.TENANT_NAME}}.api.yaml 
-              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" stacks/example.pg.yaml > stacks/${{env.TENANT_NAME}}.pg.yaml 
+              mkdir -p stacks/${{env.TENANT_NAME}}
+              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" stacks/example.api.yaml > stacks/${{env.TENANT_NAME}}/api.yaml 
+              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" stacks/example.pg.yaml > stacks/${{env.TENANT_NAME}}/pg.yaml 
               sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" nginx/conf.d/example.conf.sample > nginx/conf.d/${{env.TENANT_NAME}}.conf
 
       - name: Create Pull Request
