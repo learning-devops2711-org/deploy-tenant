@@ -1,0 +1,34 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description: 'Tenant Name'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev  # 👈 Your PAT must be in this environment
+    env:
+      TENANT_NAME: ${{ github.event.inputs.tenant }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f stacks/${{env.TENANT_NAME}}/api.yaml
+          kubectl exec -n nginx $(kubectl get pods -n nginx --field-selector=status.phase=Running  -o jsonpath='{.items[0].metadata.name}')  -- sh -c 'nginx -t && nginx -s reload'
