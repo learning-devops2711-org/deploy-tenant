@@ -4,44 +4,30 @@ on:
   workflow_dispatch:
     inputs:
       auto_merge:
-        description: 'Auto-merge PR after creation?'
-        required: true
+        description: 'Enable auto-merge after PR is created'
+        required: false
         default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
+      delete_branch:
+        description: 'Delete branch after merge'
+        required: false
+        default: 'false'
 
 jobs:
   create-pr:
     runs-on: ubuntu-latest
-    environment: dev  # 👈 Your PAT must be in this environment
+    env:
+      BRANCH_NAME: temp/random-file-${{ github.run_id }}
 
     steps:
-      - name: Checkout main
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
-          persist-credentials: false  # ❗ Prevents using github-actions[bot] token
+          persist-credentials: false
 
-      - name: Set branch name
-        run: echo "BRANCH_NAME=temp/random-file-${{ github.run_id }}" >> $GITHUB_ENV
-
-      - name: Create and commit random file
+      - name: Create a random file
         run: |
-          FILENAME=random-$(date +%s).txt
-          echo "Generated on $(date)" > $FILENAME
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git checkout -b $BRANCH_NAME
-          git add $FILENAME
-          git commit -m "chore: add $FILENAME"
-      - name: Push branch using PAT
-        env:
-          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          git remote set-url origin https://x-access-token:$PAT@github.com/${{ github.repository }}
-          git push origin $BRANCH_NAME
+          echo "This file was created at $(date)" > random-${{ github.run_id }}.txt
 
       - name: Create Pull Request
         id: cpr
@@ -51,14 +37,14 @@ jobs:
           branch: ${{ env.BRANCH_NAME }}
           base: main
           title: "chore: add random file"
-          body: "Automatically generated file on `$(date)`."
+          body: "This is an auto-generated file added by workflow run ${{ github.run_id }}."
           commit-message: "chore: add random file"
-          delete-branch: false
+          delete-branch: ${{ github.event.inputs.delete_branch }}
+          draft: false
 
-      - name: Auto-merge PR if enabled
-        if: ${{ inputs.auto_merge == 'true' }}
+      - name: Enable auto-merge (optional)
+        if: ${{ github.event.inputs.auto_merge == 'true' && steps.cpr.outputs.pull-request-number != '' }}
         run: |
-          echo "Merging PR..."
-          gh pr merge "${{ steps.cpr.outputs.pull-request-url }}" --merge --admin --delete-branch
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --merge --delete-branch
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
