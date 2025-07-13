@@ -44,9 +44,9 @@ jobs:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           branch: ${{ env.BRANCH_NAME }}
           base: main
-          title: "chore: add random file"
-          body: "This is an auto-generated file added by workflow run ${{ github.run_id }}."
-          commit-message: "chore: add random file"
+          title: "chore: add ${{env.TENANT_NAME}} file"
+          body: "This is an auto-generated ${{env.TENANT_NAME}} file added by workflow run ${{ github.run_id }}."
+          commit-message: "chore: add ${{env.TENANT_NAME}} file"
           delete-branch: ${{ github.event.inputs.delete_branch }}
           draft: false
 
