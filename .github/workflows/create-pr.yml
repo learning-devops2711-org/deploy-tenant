@@ -30,11 +30,11 @@ jobs:
           ref: main
           persist-credentials: false
 
-      - name: Create a tenant file for ${{TENANT_NAME}}
+      - name: Create a tenant file for ${{env.TENANT_NAME}}
         run: |
-              sed "s/{{TENANT_NAME}}/$TENANT_NAME/g; s/k3s-node-1/$NODE_NAME/g" stack/example.api.yaml > stack/$TENANT_NAME.api.yaml 
-              sed "s/{{TENANT_NAME}}/$TENANT_NAME/g; s/k3s-node-1/$NODE_NAME/g" stack/example.pg.yaml > stack/$TENANT_NAME.pg.yaml 
-              sed "s/{{TENANT_NAME}}/$TENANT_NAME/g; s/k3s-node-1/$NODE_NAME/g" nginx/conf.d/example.conf.sample > nginx/conf.d/$TENANT_NAME.conf
+              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" stack/example.api.yaml > stack/${{env.TENANT_NAME}}.api.yaml 
+              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" stack/example.pg.yaml > stack/${{env.TENANT_NAME}}.pg.yaml 
+              sed "s/{{TENANT_NAME}}/${{env.TENANT_NAME}}/g; s/k3s-node-1/$NODE_NAME/g" nginx/conf.d/example.conf.sample > nginx/conf.d/${{env.TENANT_NAME}}.conf
 
       - name: Create Pull Request
         id: cpr
