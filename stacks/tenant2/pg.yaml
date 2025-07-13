@@ -1,0 +1,108 @@
+# Create namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenant2
+  labels:
+    name: tenant2
+---
+# Persistent Volume (hostPath)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pg-db-pv-tenant2
+  namespace: tenant2
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/pg/tenant2
+---
+# Persistent Volume Claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pg-db-pvc-tenant2
+  namespace: tenant2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-db
+  namespace: tenant2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-db
+  template:
+    metadata:
+      labels:
+        app: pg-db
+    spec:
+      nodeName: srv653681.hstgr.cloud  # 🔁 Replace with actual node name
+      containers:
+        - name: postgres
+          image: postgres:17
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_PASSWORD
+              value: admin123
+            - name: POSTGRES_DB
+              value: mydb
+          volumeMounts:
+            - name: pg-db-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pg-db-storage
+          persistentVolumeClaim:
+            claimName: pg-db-pvc-tenant2
+---
+# PostgreSQL Service (internal only)
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-db
+  namespace: tenant2
+spec:
+  type: ClusterIP
+  selector:
+    app: pg-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# NetworkPolicy to allow only same namespace access
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-same-namespace
+  namespace: tenant2
+spec:
+  podSelector:
+    matchLabels:
+      app: pg-db
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: tenant2
+      ports:
+        - protocol: TCP
+          port: 5432
+  policyTypes:
+    - Ingress
