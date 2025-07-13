@@ -22,19 +22,13 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > ~/.kube/config
 
-      - name: Download and install kubectl
+      - name: Install kubectl
         run: |
-          set -e
-          echo "Fetching latest kubectl version..."
-          KUBECTL_VERSION=$(curl -s https://dl.k8s.io/release/stable.txt)
-          echo "Latest version is: $KUBECTL_VERSION"
-
-          URL="https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-          echo "Downloading from: $URL"
-
-          curl -LO "$URL"
+          KUBECTL_VERSION="v1.33.2"  # ✅ Use the latest stable version or whatever you need
+          curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/kubectl
+
 
 
       - name: Apply Kubernetes manifests
