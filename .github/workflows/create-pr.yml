@@ -44,6 +44,11 @@ jobs:
           echo "PAT starts with: ${PAT:0:4}"
           curl -H "Authorization: token $PAT" https://api.github.com/user
 
+      - name: Remove GitHub Actions default auth
+        run: |
+          echo "Cleaning up default GitHub Actions credentials..."
+          rm -f ~/.git-credentials ~/.netrc
+
 
       - name: Push branch using PAT directly
         env:
