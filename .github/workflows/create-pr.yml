@@ -1,8 +1,11 @@
-name: Auto PR with Random File
+name: Auto PR with Tenant File
 
 on:
   workflow_dispatch:
     inputs:
+      tenant:
+        description: 'Tenant Name'
+        required: true
       auto_merge:
         description: 'Enable auto-merge after PR is created'
         required: false
@@ -17,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev  # 👈 Your PAT must be in this environment
     env:
-      BRANCH_NAME: temp/random-file-${{ github.run_id }}
+      BRANCH_NAME: temp/create-tenant-${{ github.event.inputs.tenant }}
+      TENANT_NAME: ${{ github.event.inputs.tenant }}
 
     steps:
       - name: Checkout main branch
@@ -26,9 +30,11 @@ jobs:
           ref: main
           persist-credentials: false
 
-      - name: Create a random file
+      - name: Create a tenant file for ${{TENANT_NAME}}
         run: |
-          echo "This file was created at $(date)" > random-${{ github.run_id }}.txt
+              sed "s/{{TENANT_NAME}}/$TENANT_NAME/g; s/k3s-node-1/$NODE_NAME/g" stack/example.api.yaml > stack/$TENANT_NAME.api.yaml 
+              sed "s/{{TENANT_NAME}}/$TENANT_NAME/g; s/k3s-node-1/$NODE_NAME/g" stack/example.pg.yaml > stack/$TENANT_NAME.pg.yaml 
+              sed "s/{{TENANT_NAME}}/$TENANT_NAME/g; s/k3s-node-1/$NODE_NAME/g" nginx/conf.d/example.conf.sample > nginx/conf.d/$TENANT_NAME.conf
 
       - name: Create Pull Request
         id: cpr
