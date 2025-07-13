@@ -22,6 +22,7 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
+    environment: dev  # Only needed if you're using an environment
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,6 +31,7 @@ jobs:
         id: create_pr
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           commit-message: ${{ github.event.inputs.title }}
           title: ${{ github.event.inputs.title }}
           body: ${{ github.event.inputs.body }}
