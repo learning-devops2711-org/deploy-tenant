@@ -36,6 +36,12 @@ jobs:
           git checkout -b $BRANCH_NAME
           git add $FILENAME
           git commit -m "chore: add $FILENAME"
+      - name: Push branch using PAT
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          git remote set-url origin https://x-access-token:$PAT@github.com/${{ github.repository }}
+          git push origin $BRANCH_NAME
 
       - name: Create Pull Request
         id: cpr
