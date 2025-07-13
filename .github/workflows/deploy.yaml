@@ -29,6 +29,12 @@ jobs:
           chmod +x kubectl
           sudo mv kubectl /usr/local/bin/kubectl
 
+      - name: Setup kubeconfig
+        run: |
+          echo "$KUBECONFIG_DATA" | base64 -d > kubeconfig
+          export KUBECONFIG=$PWD/kubeconfig
+        env:
+          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_DATA }}
 
 
       - name: Apply Kubernetes manifests
