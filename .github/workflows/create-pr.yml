@@ -1,10 +1,10 @@
-name: Auto PR from Temp Branch
+name: Auto PR with Random File
 
 on:
   workflow_dispatch:
     inputs:
       auto_merge:
-        description: 'Auto-merge PR?'
+        description: 'Auto-merge PR after creation?'
         required: true
         default: 'false'
         type: choice
@@ -15,48 +15,27 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
-    environment: dev   # 👈 Required to access PAT from the 'dev' environment
+    environment: dev  # 👈 Your PAT must be in this environment
 
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
-          persist-credentials: false   # 👈 REQUIRED to stop injecting github-actions[bot
+          persist-credentials: false  # ❗ Prevents using github-actions[bot] token
 
       - name: Set branch name
         run: echo "BRANCH_NAME=temp/random-file-${{ github.run_id }}" >> $GITHUB_ENV
 
-      - name: Create random file and commit
+      - name: Create and commit random file
         run: |
           FILENAME=random-$(date +%s).txt
-          echo "Generated at $(date)" > $FILENAME
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Generated on $(date)" > $FILENAME
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
           git checkout -b $BRANCH_NAME
           git add $FILENAME
           git commit -m "chore: add $FILENAME"
-      
-      
-      - name: Debug identity
-        env:
-          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          echo "PAT starts with: ${PAT:0:4}"
-          curl -H "Authorization: token $PAT" https://api.github.com/user
-
-      - name: Remove GitHub Actions default auth
-        run: |
-          echo "Cleaning up default GitHub Actions credentials..."
-          rm -f ~/.git-credentials ~/.netrc
-
-
-      - name: Push branch using PAT directly
-        env:
-          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          echo "Pushing directly with PAT URL..."
-          git push https://x-access-token:$PAT@github.com/${{ github.repository }} $BRANCH_NAME
 
       - name: Create Pull Request
         id: cpr
@@ -66,11 +45,14 @@ jobs:
           branch: ${{ env.BRANCH_NAME }}
           base: main
           title: "chore: add random file"
-          body: "Automatically generated random file."
+          body: "Automatically generated file on `$(date)`."
+          commit-message: "chore: add random file"
+          delete-branch: false
 
       - name: Auto-merge PR if enabled
         if: ${{ inputs.auto_merge == 'true' }}
         run: |
+          echo "Merging PR..."
           gh pr merge "${{ steps.cpr.outputs.pull-request-url }}" --merge --admin --delete-branch
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
