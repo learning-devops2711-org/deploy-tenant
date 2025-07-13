@@ -48,9 +48,6 @@ spec:
               mountPath: /var/jenkins_home
             - name: docker-sock
               mountPath: /var/run/docker.sock
-            - name: docker-cli
-              mountPath: /usr/bin/docker
-              readOnly: true
 
       volumes:
         - name: jenkins-home
@@ -59,9 +56,6 @@ spec:
         - name: docker-sock
           hostPath:
             path: /var/run/docker.sock
-        - name: docker-cli
-          hostPath:
-            path: /usr/bin/docker
 ---
 apiVersion: v1
 kind: Service
