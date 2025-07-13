@@ -1,0 +1,56 @@
+name: Create and optionally merge PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        default: 'main'
+        description: 'Target branch name (e.g., feature/xyz)'
+        required: true
+      title:
+        description: 'Pull Request title'
+        required: true
+      body:
+        description: 'Pull Request body'
+        required: false
+        default: ''
+      automerge:
+        description: 'Automerge the PR after creation (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create pull request
+        id: create_pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: ${{ github.event.inputs.title }}
+          title: ${{ github.event.inputs.title }}
+          body: ${{ github.event.inputs.body }}
+          base: main
+          branch: ${{ github.event.inputs.branch }}
+          delete-branch: false
+
+      - name: Enable auto-merge
+        if: ${{ github.event.inputs.automerge == 'true' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = ${{ steps.create_pr.outputs.pull-request-number }};
+            if (!prNumber) {
+              core.setFailed("No PR number returned from create-pull-request.");
+              return;
+            }
+            await github.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              merge_method: "squash"  // or "merge", "rebase"
+            });
