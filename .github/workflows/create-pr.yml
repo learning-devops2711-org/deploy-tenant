@@ -15,6 +15,7 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
+    environment: dev  # 👈 Your PAT must be in this environment
     env:
       BRANCH_NAME: temp/random-file-${{ github.run_id }}
 
