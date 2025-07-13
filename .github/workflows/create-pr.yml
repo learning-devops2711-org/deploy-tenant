@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        default: 'main'
+        default: 'feature/deploy'
         description: 'Target branch name (e.g., feature/xyz)'
         required: true
       title:
