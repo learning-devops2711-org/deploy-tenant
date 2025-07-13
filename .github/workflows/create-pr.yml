@@ -36,10 +36,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add $FILENAME
           git commit -m "chore: add random file $FILENAME"
-
-      - name: Push temp branch
+      - name: Debug remote
+        run: git remote -v
+  
+      - name: Set remote to use PAT
         run: |
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }} $BRANCH_NAME
+          git remote set-url origin https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}
+          git push origin $BRANCH_NAME
 
       - name: Create Pull Request
         id: cpr
