@@ -36,13 +36,12 @@ jobs:
           git add $FILENAME
           git commit -m "chore: add $FILENAME"
 
-      - name: 🔐 Push using PAT
+      - name: Push branch using PAT directly
         env:
           PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
-          echo "Authenticating with PAT..."
-          git remote set-url origin https://x-access-token:$PAT@github.com/${{ github.repository }}
-          git push origin $BRANCH_NAME
+          echo "Pushing directly with PAT URL..."
+          git push https://x-access-token:$PAT@github.com/${{ github.repository }} $BRANCH_NAME
 
       - name: Create Pull Request
         id: cpr
