@@ -35,6 +35,15 @@ jobs:
           git checkout -b $BRANCH_NAME
           git add $FILENAME
           git commit -m "chore: add $FILENAME"
+      
+      
+      - name: Debug identity
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          echo "PAT starts with: ${PAT:0:4}"
+          curl -H "Authorization: token $PAT" https://api.github.com/user
+
 
       - name: Push branch using PAT directly
         env:
