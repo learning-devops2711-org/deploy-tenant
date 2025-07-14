@@ -1,0 +1,26 @@
+name: Sync Folder to Remote Server
+
+on:
+  push:
+    branches:
+      - main  # or any other branch you want
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H {{secrets.REMOTE}} >> ~/.ssh/known_hosts
+
+      - name: Sync folder to server
+        run: |
+          rsync -avz ./nginx/ root@{{secrets.REMOTE}}:/data/k3s/nginx
+          rsync -avz ./stacks/ root@{{secrets.REMOTE}}:/data/k3s/stacks
