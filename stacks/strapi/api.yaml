@@ -18,16 +18,10 @@ spec:
       labels:
         app: strapi
     spec:
-      dnsPolicy: "Default"
-      securityContext:
-        runAsUser: 1000
-        fsGroup: 1000
       containers:
         - name: strapi
-          image: strapi:v1
+          image: learningdevops2711/strapi:v1
           imagePullPolicy: IfNotPresent
-          securityContext:
-            runAsUser: 0  # Run as root so we can install Docker CLI if needed
           ports:
             - containerPort: 1337
 ---
