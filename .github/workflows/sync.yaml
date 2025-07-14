@@ -1,9 +1,8 @@
 name: Sync Folder to Remote Server
 
 on:
-  push:
-    branches:
-      - main  # or any other branch you want
+  workflow_dispatch:
+
 
 jobs:
   deploy:
@@ -18,9 +17,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.REMOTE }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_REMOTE }} >> ~/.ssh/known_hosts
 
       - name: Sync folder to server
         run: |
-          rsync -avz ./nginx/ root@${{secrets.REMOTE}}:/data/k3s/nginx
-          rsync -avz ./stacks/ root@${{secrets.REMOTE}}:/data/k3s/stacks
+          rsync -avz ./nginx/ root@${{secrets.SSH_REMOTE}}:/data/k3s/nginx
+          rsync -avz ./stacks/ root@${{secrets.SSH_REMOTE}}:/data/k3s/stacks
