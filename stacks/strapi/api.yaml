@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: strapi
-          image: learningdevops2711/strapi:v1
+          image: learningdevops2711/strapi:v2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 1337
