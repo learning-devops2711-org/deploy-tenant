@@ -7,6 +7,16 @@ jobs:
   multi-checkout:
     runs-on: ubuntu-latest
     steps:
+      - name: Print repo info
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Owner: ${{ github.repository_owner }}"
+          echo "Actor (who triggered): ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Workflow: ${{ github.workflow }}"
+
       # Checkout main repository
       - name: Checkout main repo
         uses: actions/checkout@v4

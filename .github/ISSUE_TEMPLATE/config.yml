@@ -1,5 +1,5 @@
 blank_issues_enabled: false  # disables the "Open a blank issue" button
 contact_links:
   - name: 💬 General Question
-    url: https://github.com/your-org/your-repo/discussions
+    url: https://github.com/${{ github.repository_owner }}/${{ github.repository }}/discussions
     about: Ask a question or start a discussion here.
