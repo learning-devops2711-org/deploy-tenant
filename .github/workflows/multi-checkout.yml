@@ -1,0 +1,29 @@
+name: Checkout Multiple Repos
+
+on:
+  workflow_dispatch:  # Or use push, pull_request, etc.
+
+jobs:
+  multi-checkout:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout main repository
+      - name: Checkout main repo
+        uses: actions/checkout@v4
+
+      # Checkout a private repo (requires token)
+      - name: Checkout private repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hello-world-spring-boot-docker
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # must have repo access
+          path: hello-world-spring-boot-docker
+
+      # Checkout a private repo (requires token)
+      - name: Checkout private repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/java-hello-world-with-maven
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }} # must have repo access
+          path: java-hello-world-with-maven
+

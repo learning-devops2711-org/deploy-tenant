@@ -1,0 +1,42 @@
+name: Bug Report
+description: Report a reproducible bug or regression.
+title: "[BUG] <short description>"
+labels: [bug]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please complete the form below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened? What did you expect?
+      placeholder: A clear and concise description...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the issue?
+      placeholder: "1. Go to...\n2. Click on...\n3. Scroll to...\n4. See error"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: OS, Browser, Version
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Add any other context or screenshots here.
