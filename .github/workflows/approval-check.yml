@@ -10,33 +10,36 @@ jobs:
     permissions:
       issues: write
       contents: read
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
 
     steps:
-      - name: Process approval
+      - id: check
+        name: Check label and approvals
         uses: actions/github-script@v7
         with:
+          result-encoding: string
           script: |
             const requiredApprovals = 2;
+            const teamSlug = 'approval'; // ← change this
             const org = context.repo.owner;
             const repo = context.repo.repo;
-            const teamSlug = 'approval'; // 🔁 update this
             const issueNumber = context.issue.number;
 
-            // Step 1: Get issue details & check for required label
+            // Get issue details
             const { data: issue } = await github.rest.issues.get({
               owner: org,
               repo,
               issue_number: issueNumber,
             });
 
-            const hasRequiredLabel = issue.labels.some(label => label.name === 'pending-approval');
-
-            if (!hasRequiredLabel) {
-              console.log(`Issue #${issueNumber} does not have the required 'pending-approval' label. Skipping.`);
-              return;
+            const hasLabel = issue.labels.some(l => l.name === 'pending-approval');
+            if (!hasLabel) {
+              console.log("Missing label 'pending-approval'. Skipping.");
+              return 'skip';
             }
 
-            // Step 2: Fetch comments and count team member approvals
+            // Gather approvals
             const comments = await github.rest.issues.listComments({
               owner: org,
               repo,
@@ -44,43 +47,54 @@ jobs:
             });
 
             const approvals = new Set();
-
             for (const comment of comments.data) {
               if (comment.body.trim().toLowerCase() === '/approve') {
-              console.log(`Found Comment`);
-                const username = comment.user.login;
-
                 try {
                   await github.rest.teams.getMembershipForUserInOrg({
                     org,
                     team_slug: teamSlug,
-                    username,
+                    username: comment.user.login,
                   });
-                  approvals.add(username);
-                } catch {
-                  // Not a team member; ignore
-                }
+                  approvals.add(comment.user.login);
+                } catch {}
               }
             }
 
             console.log(`Approvals from team: ${[...approvals]}`);
+            if (approvals.size >= requiredApprovals) return 'run';
 
-            if (approvals.size >= requiredApprovals) {
-              // Step 3: Add the 'approved' label
-              await github.rest.issues.addLabels({
-                owner: org,
-                repo,
-                issue_number: issueNumber,
-                labels: ['approved'],
-              });
+            return 'wait'; // not enough approvals yet
 
-              // Step 4: Optionally trigger another workflow
-              await github.rest.repos.createDispatchEvent({
-                owner: org,
-                repo,
-                event_type: 'run-approved-workflow',
-                client_payload: { issue: issueNumber }
-              });
-            } else {
-              console.log(`Only ${approvals.size}/${requiredApprovals} approvals found.`);
-            }
+        outputs:
+          should_run: ${{ steps.check.outputs.result }}
+          
+      - name: Add label and trigger
+        if: steps.check.outputs.result == 'run'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const org = context.repo.owner;
+            const repo = context.repo.repo;
+            const issueNumber = context.issue.number;
+
+            await github.rest.issues.addLabels({
+              owner: org,
+              repo,
+              issue_number: issueNumber,
+              labels: ['approved'],
+            });
+
+            await github.rest.repos.createDispatchEvent({
+              owner: org,
+              repo,
+              event_type: 'run-approved-workflow',
+              client_payload: { issue: issueNumber }
+            });
+
+      - name: Skip message
+        if: steps.check.outputs.result == 'skip'
+        run: echo "Skipping: Issue does not have the required label."
+
+      - name: Waiting for more approvals
+        if: steps.check.outputs.result == 'wait'
+        run: echo "Waiting for more approvals before proceeding."
