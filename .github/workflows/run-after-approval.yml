@@ -1,0 +1,12 @@
+name: Run After Approval
+
+on:
+  repository_dispatch:
+    types: [run-approved-workflow]
+
+jobs:
+  run-main-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approved Workflow Triggered
+        run: echo "Workflow triggered after required approvals"

@@ -1,0 +1,85 @@
+name: Approval Check
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  check-approval:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Process approval
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const requiredApprovals = 2;
+            const org = context.repo.owner;
+            const repo = context.repo.repo;
+            const teamSlug = 'your-team-slug'; // 🔁 update this
+            const issueNumber = context.issue.number;
+
+            // Step 1: Get issue details & check for required label
+            const { data: issue } = await github.rest.issues.get({
+              owner: org,
+              repo,
+              issue_number: issueNumber,
+            });
+
+            const hasRequiredLabel = issue.labels.some(label => label.name === 'pending-approval');
+
+            if (!hasRequiredLabel) {
+              console.log(`Issue #${issueNumber} does not have the required 'pending-approval' label. Skipping.`);
+              return;
+            }
+
+            // Step 2: Fetch comments and count team member approvals
+            const comments = await github.rest.issues.listComments({
+              owner: org,
+              repo,
+              issue_number: issueNumber,
+            });
+
+            const approvals = new Set();
+
+            for (const comment of comments.data) {
+              if (comment.body.trim().toLowerCase() === '/approve') {
+                const username = comment.user.login;
+
+                try {
+                  await github.rest.teams.getMembershipForUserInOrg({
+                    org,
+                    team_slug: teamSlug,
+                    username,
+                  });
+                  approvals.add(username);
+                } catch {
+                  // Not a team member; ignore
+                }
+              }
+            }
+
+            console.log(`Approvals from team: ${[...approvals]}`);
+
+            if (approvals.size >= requiredApprovals) {
+              // Step 3: Add the 'approved' label
+              await github.rest.issues.addLabels({
+                owner: org,
+                repo,
+                issue_number: issueNumber,
+                labels: ['approved'],
+              });
+
+              // Step 4: Optionally trigger another workflow
+              await github.rest.repos.createDispatchEvent({
+                owner: org,
+                repo,
+                event_type: 'run-approved-workflow',
+                client_payload: { issue: issueNumber }
+              });
+            } else {
+              console.log(`Only ${approvals.size}/${requiredApprovals} approvals found.`);
+            }
