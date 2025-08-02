@@ -93,7 +93,7 @@ jobs:
 
       - name: Skip message
         if: steps.check.outputs.result == 'skip'
-        run: echo "Skipping: Issue does not have the required label."
+        run: echo "Skipping Issue does not have the required label."
 
       - name: Waiting for more approvals
         if: steps.check.outputs.result == 'wait'
