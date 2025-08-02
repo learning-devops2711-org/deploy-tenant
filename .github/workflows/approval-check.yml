@@ -19,7 +19,7 @@ jobs:
             const requiredApprovals = 2;
             const org = context.repo.owner;
             const repo = context.repo.repo;
-            const teamSlug = 'your-team-slug'; // 🔁 update this
+            const teamSlug = 'approval'; // 🔁 update this
             const issueNumber = context.issue.number;
 
             // Step 1: Get issue details & check for required label
