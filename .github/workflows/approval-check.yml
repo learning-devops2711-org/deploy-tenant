@@ -47,6 +47,7 @@ jobs:
 
             for (const comment of comments.data) {
               if (comment.body.trim().toLowerCase() === '/approve') {
+              console.log(`Found Comment`);
                 const username = comment.user.login;
 
                 try {
